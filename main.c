@@ -2,6 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+    unsigned char memoria[154];
+    unsigned short int mar,ibr,imm;
+    unsigned short int pc=0;
+    unsigned int mbr;
+    unsigned char ir=0;
+    unsigned char equal, lower, greater;
+    unsigned char lr;
+    unsigned short int aluA, aluB, aluT ;
+
+
+void imprimeEmBinario2(unsigned int num){
+    for(int i = sizeof(num)*8 - 1; i >= 0; i--){
+        printf("%d", (num>>i) & 1);
+    }
+}
+
 void imprimeEmBinario(short int num){
     for(int i = sizeof(num)*8 - 1; i >= 0; i--){
         printf("%d", (num>>i) & 1);
@@ -241,40 +257,26 @@ void executaLeituraDosDadosEGuardaNaMemoria(char *memoria, char *palavra){
     }
 }
 
-int main()
-{
-    unsigned char memoria[154];
-    unsigned short int mbr, mar, ibr, imm, pc = 0;
-    unsigned char ir;
-    unsigned char equal, lower, greater;
-    unsigned char lFlag, rFlag;
-    unsigned short int aluA, aluB, aluT = 0;
+void mostraRegistradores(){
+     printf("\n \n \t\t Registradores :  \n\n");
+     printf("  A:      %x           B:    %x           T:      %x   \n",aluA,aluB,aluT);
+     printf("  MBR:    %x           IR:   %x           MAR:    %x   \n",mbr,ir,mar);
+     printf("  IBR:    %x           PC:   %x           IMM:    %x   \n",ibr,pc,imm);
+     printf("  E:      %x           L:    %x           G:      %x   \n",equal,lower,greater);
+     printf("  lr:     %x         \n",lr);
+}
 
-    for(int i = 0; i < 154; i++){
-        if(memoria[i] =! 47){
-            memoria[i] = 47;
-        }
-    }
+unsigned int passaPalavraDaMemMbr(unsigned short int mar){
+    unsigned int Hexmbr;
+    Hexmbr = (((memoria[mar]<<24)| (memoria[mar+1]<<16) )|(memoria[mar+2]<<8))|(memoria[mar+3]);
+    printf("\n\n MBR: %x \n\n",mbr);
+    imprimeEmBinario2(Hexmbr);
 
-    FILE *arquivo;
-    char texto[30];
+    return Hexmbr;
+}
 
-    arquivo = fopen("entrada.txt", "r");
 
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
-        return 1;
-    }
-
-    int i = 0;
-    while (fgets(texto, 30, arquivo) != NULL) {
-        executaLeituraDosDadosEGuardaNaMemoria(memoria, texto);
-        i++;
-    }
-
-    fclose(arquivo);
-
-    printf("     ");
+void mostraMemoria(){
 
     for(int i = 0;i < 16; i++){
         printf(" %02x ", i);
@@ -304,6 +306,201 @@ int main()
     for(int i = 145;i < 161; i++){
         printf(" %02x ", i - 145);
     }
+}
+
+void divideMbrEmIrMarIbr(unsigned int MBR){
+    ir = MBR>>27;
+    mar = (MBR>>16)<<5;
+    mar =  mar >>5;
+    ibr = MBR;
+
+}
+
+void identificaOp(unsigned char IR){
+
+
+int main()
+{
+
+
+    for(int i = 0; i < 154; i++){
+        if(memoria[i] =! 47){
+            memoria[i] = 47;
+        }
+    }
+
+    FILE *arquivo;
+    char texto[30];
+
+    arquivo = fopen("entrada.txt", "r");
+
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return 1;
+    }
+
+    int i = 0;
+    while (fgets(texto, 30, arquivo) != NULL) {
+        executaLeituraDosDadosEGuardaNaMemoria(memoria, texto);
+        i++;
+    }
+
+    fclose(arquivo);
+
+    printf("     ");
+
+    mostraMemoria();
+
+    // a cada cliclo de busca pc+4
+
+    mbr = passaPalavraDaMemMbr(mar);
+    pc=pc+4;
+
+    divideMbrEmIrMarIbr(mbr);
+    mostraRegistradores();
+
 
     return 0;
 }
+
+
+
+
+
+
+    if(IR&'00000'){
+        //fim do programa
+    }else{
+        if(IR&'00001'){
+            //noop
+        }else{
+            if(IR&'00010' ){
+                //add
+            }else{
+                if(IR&'00011'){
+                    //sub
+                }else{
+                    if(IR&'00100'){
+                        //mult
+                    }else{
+                        if(IR&'00101'){
+                            //div
+                        }else{
+                            if(IR&'00110'){
+                                //cmp
+                            }else{
+                                if(IR&'00111'){
+                                    //xchg
+                                }else{
+                                    if(IR&'01000'){
+                                        //and
+                                    }else{
+                                        if(IR&'01001'){
+                                            //or
+                                        }else{
+                                            if(IR&'01010'){
+                                                //xor
+                                            }else{
+                                                if(IR&'01011'){
+                                                    //not
+                                                }else{
+                                                    if(IR&'01100'){
+                                                        //je M[X]
+                                                    }else{
+                                                        if(IR&'01101'){
+                                                            //jne M[X]
+                                                        }else{
+                                                            if(IR&'01110'){
+                                                                //jl M[X]
+                                                            }else{
+                                                                if(IR&'01111'){
+                                                                    //jle M[X]
+                                                                }else{
+                                                                    if(IR&'10000'){
+                                                                        //jg M[X]
+                                                                    }else{
+                                                                        if(IR&'10001'){
+                                                                            //jge M[X]
+                                                                        }else{
+                                                                            if(IR&'10010'){
+                                                                                //jmp M[X]
+                                                                            }else{
+                                                                                if(IR&'10011'){
+                                                                                    //lda M[X]
+                                                                                }else{
+                                                                                    if(IR&'10100'){
+                                                                                        //ldb M[X]
+                                                                                    }else{
+                                                                                        if(IR&'10101'){
+                                                                                            //sta M[X]
+                                                                                        }else{
+                                                                                            if(IR&'10110'){
+                                                                                                //stb M[X]
+                                                                                            }else{
+                                                                                                if(IR&'10111'){
+                                                                                                    //ldrb
+                                                                                                }else{
+                                                                                                    if(IR&'11000'){
+                                                                                                        //movial imm
+                                                                                                    }else{
+                                                                                                        if(IR&'11001'){
+                                                                                                            //moviah imm
+                                                                                                        }else{
+                                                                                                            if(IR&'11010'){
+                                                                                                                //addia imm
+                                                                                                            }else{
+                                                                                                                if(IR&'11011'){
+                                                                                                                    //subia imm
+                                                                                                                }else{
+                                                                                                                    if(IR&'11100'){
+                                                                                                                        //mulia imm
+                                                                                                                    }else{
+                                                                                                                        if(IR&'11101'){
+                                                                                                                            //divia imm
+                                                                                                                        }else{
+                                                                                                                            if(IR&'11110'){
+                                                                                                                                //lsh imm
+                                                                                                                            }else{
+                                                                                                                                if(IR&'11111'){
+                                                                                                                                    //rsh imm
+                                                                                                                                }else{
+                                                                                                                                    printf("\n Op nao encontrada \n");
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+}
+
+
+
+
+
