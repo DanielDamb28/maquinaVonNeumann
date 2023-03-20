@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-    unsigned char memoria[154];
-    unsigned short int mar,ibr,imm;
-    unsigned short int pc=0;
-    unsigned int mbr;
-    unsigned char ir=0;
-    unsigned char equal, lower, greater;
-    unsigned char lr;
-    unsigned short int aluA, aluB, aluT ;
+unsigned char memoria[154];
+unsigned short int mar = 0,ibr = 0,imm = 0;
+unsigned short int pc=0;
+unsigned int mbr = 0;
+unsigned char ir=0;
+unsigned char equal = 0, lower = 0, greater = 0;
+unsigned char flagLR = 0;
+unsigned short int aluA = 0, aluB = 0, aluT = 0 ;
 
 
 void imprimeEmBinario2(unsigned int num){
@@ -143,7 +143,7 @@ int separaValorASerGuardado(char *valorDeEntrada, int inicioProximaInstrucao){
     return a;
 }
 
-guardaInstrucaoNaMemoria(char *op, int enderecoDeMemoria, int posicaoNaMemoria, char *memoria){
+void guardaInstrucaoNaMemoria(char *op, int enderecoDeMemoria, int posicaoNaMemoria, char *memoria){
     char conjuntoDeIntrucoes[32][6];
     strcpy(conjuntoDeIntrucoes[0], "hlt");strcpy(conjuntoDeIntrucoes[1], "nop");strcpy(conjuntoDeIntrucoes[2], "add");strcpy(conjuntoDeIntrucoes[3], "sub");
     strcpy(conjuntoDeIntrucoes[4], "mul");strcpy(conjuntoDeIntrucoes[5], "div");strcpy(conjuntoDeIntrucoes[6], "cmp");strcpy(conjuntoDeIntrucoes[7], "xchg");
@@ -259,22 +259,30 @@ void executaLeituraDosDadosEGuardaNaMemoria(char *memoria, char *palavra){
 
 void mostraRegistradores(){
      printf("\n \n \t\t Registradores :  \n\n");
-     printf("  A:      %x           B:    %x           T:      %x   \n",aluA,aluB,aluT);
-     printf("  MBR:    %x           IR:   %x           MAR:    %x   \n",mbr,ir,mar);
-     printf("  IBR:    %x           PC:   %x           IMM:    %x   \n",ibr,pc,imm);
-     printf("  E:      %x           L:    %x           G:      %x   \n",equal,lower,greater);
-     printf("  lr:     %x         \n",lr);
+     printf("  A:      %.04x               B:    %.04x               T:      %.04x   \n",aluA,aluB,aluT);
+     printf("  MBR:    %.08x           IR:   %.04x               MAR:    %.04x   \n",mbr,ir,mar);
+     printf("  IBR:    %.08x           PC:   %.04x               IMM:    %.04x   \n",ibr,pc,imm);
+     printf("  E:      %.02x                 L:    %.02x                 G:      %.02x   \n",equal,lower,greater);
+     printf("  lr:     %.02x         \n",flagLR);
 }
 
-unsigned int passaPalavraDaMemMbr(unsigned short int mar){
-    unsigned int Hexmbr;
-    Hexmbr = (((memoria[mar]<<24)| (memoria[mar+1]<<16) )|(memoria[mar+2]<<8))|(memoria[mar+3]);
-    printf("\n\n MBR: %x \n\n",mbr);
-    imprimeEmBinario2(Hexmbr);
-
-    return Hexmbr;
+unsigned int passaInstrucaoDaMemoriaParaOMbr(){
+    unsigned int hexmbr;
+    hexmbr = (((memoria[mar]<<24)| (memoria[mar+1]<<16) )|(memoria[mar+2]<<8))|(memoria[mar+3]);
+    flagLR = 1;
+    return hexmbr;
 }
 
+unsigned short int passaDadoDaMemomiaParaOMbr(){
+    unsigned short int hexmbr = (memoria[mar] << 8)|(memoria[mar + 1]);
+    return hexmbr;
+}
+
+void passaDadoDoMbrParaAMemoria(){
+    memoria[mar] = (mbr >> 8);
+    memoria[mar + 1] = (mbr << 8);
+    memoria[mar + 1] = memoria[mar + 1] >> 8;
+}
 
 void mostraMemoria(){
 
@@ -308,16 +316,143 @@ void mostraMemoria(){
     }
 }
 
-void divideMbrEmIrMarIbr(unsigned int MBR){
-    ir = MBR>>27;
-    mar = (MBR>>16)<<5;
+void divideMbrEmIrMarIbr(){
+    ir = mbr>>27;
+    mar = (mbr>>16)<<5;
     mar =  mar >>5;
-    ibr = MBR;
+    ibr = mbr;
 
 }
 
-void identificaOp(unsigned char IR){
+void identificaOp(){
+    switch(ir){
+    case 0:
+        //fim do programa
+    case 1:
+        //nop
+    case 2:
+        //add
+    case 3:
+        //sub
+    case 4:
+        //mul
+    case 5:
+        //div
+    case 6:
+        //cmp
+    case 7:
+        //xchg
+    case 8:
+        //and
+    case 9:
+        //or
+    case 10:
+        //xor
+    case 11:
+        //not
+    case 12:
+        //je
+    case 13:
+        //jne
+    case 14:
+        //jl
+    case 15:
+        //jle
+    case 16:
+        //jg
+        if(greater == 1){
+            pc = mar;
+        }
+        break;
+    case 17:
+        //jge
+        if(greater == 1 || equal == 1){
+            pc = mar;
+        }
+        break;
+    case 18:
+        //jmp
+        pc = mar;
+        break;
+    case 19:
+        //lda
+        mbr = passaDadoDaMemomiaParaOMbr();
+        aluA = mbr;
+        break;
+    case 20:
+        //ldb
+        mbr = passaDadoDaMemomiaParaOMbr();
+        aluB = mbr;
+        break;
+    case 21:
+        //sta
+        mbr = aluA;
+        passaDadoDoMbrParaAMemoria();
+        break;
+    case 22:
+        //stb
+        mbr = aluB;
+        passaDadoDoMbrParaAMemoria();
+        break;
+    case 23:
+        //ldrb
+        mbr = aluB;
+        mar = mbr;
+        passaDadoDaMemomiaParaOMbr();
+        aluA = mbr;
+        break;
+    case 24:
+        //movial imm
+        aluA = 0;
+        mbr = imm;
+        aluA = imm << 8;
+        aluA = aluA >> 8;
+        break;
 
+    case 25:
+        //moviah
+        mbr = imm << 8;
+        aluA = aluA << 8;
+        aluA = aluA >> 8;
+        aluA = aluA|imm;
+        break;
+    case 26:
+        //addia
+        mbr = imm;
+        aluA = aluA + mbr;
+        break;
+    case 27:
+        //subia
+        mbr = imm;
+        aluA = aluA - mbr;
+        break;
+    case 28:
+        //mulia
+        mbr = imm;
+        aluA = aluA * mbr;
+        break;
+    case 29:
+        //divia
+        mbr = imm;
+        aluA = aluA/mbr;
+        break;
+    case 30:
+        //lsh
+        mbr = imm;
+        aluA = aluA << mbr;
+        break;
+    case 31:
+        //rsh
+        mbr = imm;
+        aluA = aluA >> mbr;
+        break;
+    }
+}
+
+void mostraMemoriaEResgistradores(){
+    mostraMemoria();
+    mostraRegistradores();
+}
 
 int main()
 {
@@ -349,155 +484,15 @@ int main()
 
     printf("     ");
 
-    mostraMemoria();
-
-    // a cada cliclo de busca pc+4
-
-    mbr = passaPalavraDaMemMbr(mar);
+    mbr = passaInstrucaoDaMemoriaParaOMbr();
     pc=pc+4;
 
-    divideMbrEmIrMarIbr(mbr);
-    mostraRegistradores();
+    divideMbrEmIrMarIbr();
+    mostraMemoriaEResgistradores();
 
+    identificaOp();
 
     return 0;
-}
-
-
-
-
-
-
-    if(IR&'00000'){
-        //fim do programa
-    }else{
-        if(IR&'00001'){
-            //noop
-        }else{
-            if(IR&'00010' ){
-                //add
-            }else{
-                if(IR&'00011'){
-                    //sub
-                }else{
-                    if(IR&'00100'){
-                        //mult
-                    }else{
-                        if(IR&'00101'){
-                            //div
-                        }else{
-                            if(IR&'00110'){
-                                //cmp
-                            }else{
-                                if(IR&'00111'){
-                                    //xchg
-                                }else{
-                                    if(IR&'01000'){
-                                        //and
-                                    }else{
-                                        if(IR&'01001'){
-                                            //or
-                                        }else{
-                                            if(IR&'01010'){
-                                                //xor
-                                            }else{
-                                                if(IR&'01011'){
-                                                    //not
-                                                }else{
-                                                    if(IR&'01100'){
-                                                        //je M[X]
-                                                    }else{
-                                                        if(IR&'01101'){
-                                                            //jne M[X]
-                                                        }else{
-                                                            if(IR&'01110'){
-                                                                //jl M[X]
-                                                            }else{
-                                                                if(IR&'01111'){
-                                                                    //jle M[X]
-                                                                }else{
-                                                                    if(IR&'10000'){
-                                                                        //jg M[X]
-                                                                    }else{
-                                                                        if(IR&'10001'){
-                                                                            //jge M[X]
-                                                                        }else{
-                                                                            if(IR&'10010'){
-                                                                                //jmp M[X]
-                                                                            }else{
-                                                                                if(IR&'10011'){
-                                                                                    //lda M[X]
-                                                                                }else{
-                                                                                    if(IR&'10100'){
-                                                                                        //ldb M[X]
-                                                                                    }else{
-                                                                                        if(IR&'10101'){
-                                                                                            //sta M[X]
-                                                                                        }else{
-                                                                                            if(IR&'10110'){
-                                                                                                //stb M[X]
-                                                                                            }else{
-                                                                                                if(IR&'10111'){
-                                                                                                    //ldrb
-                                                                                                }else{
-                                                                                                    if(IR&'11000'){
-                                                                                                        //movial imm
-                                                                                                    }else{
-                                                                                                        if(IR&'11001'){
-                                                                                                            //moviah imm
-                                                                                                        }else{
-                                                                                                            if(IR&'11010'){
-                                                                                                                //addia imm
-                                                                                                            }else{
-                                                                                                                if(IR&'11011'){
-                                                                                                                    //subia imm
-                                                                                                                }else{
-                                                                                                                    if(IR&'11100'){
-                                                                                                                        //mulia imm
-                                                                                                                    }else{
-                                                                                                                        if(IR&'11101'){
-                                                                                                                            //divia imm
-                                                                                                                        }else{
-                                                                                                                            if(IR&'11110'){
-                                                                                                                                //lsh imm
-                                                                                                                            }else{
-                                                                                                                                if(IR&'11111'){
-                                                                                                                                    //rsh imm
-                                                                                                                                }else{
-                                                                                                                                    printf("\n Op nao encontrada \n");
-                                                                                                                                }
-                                                                                                                            }
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
 }
 
 
