@@ -18,7 +18,7 @@ void imprimeEmBinario2(unsigned int num){
     }
 }
 
-void imprimeEmBinario(short int num){
+void imprimeEmBinario(unsigned short int num){
     for(int i = sizeof(num)*8 - 1; i >= 0; i--){
         printf("%d", (num>>i) & 1);
     }
@@ -91,11 +91,11 @@ void separaPrimeiraInstrucaoDoValorDeEntrada(char *valorDeEntrada, char *primeir
     limpaEspacosEmBrancoAEsquerdaDaString(primeiraInstrucao);
 }
 
-void separaOperacaoDaInstrucao(char *instrucao, char* op, int inicioEnderecoMemoria){
+void separaOperacaoDaInstrucao(char *instrucao, char *sOp, int inicioEnderecoMemoria){
     int k = 0;
     for(int i = 0; i < inicioEnderecoMemoria; i++){
         if(instrucao[i] != ' '){
-            op[k++] = instrucao [i];
+            sOp[k++] = instrucao [i];
         } else {
             break;
         }
@@ -120,16 +120,6 @@ void separaSegundaInstrucaoDoValorDeEntrada(char *valorDeEntrada, char *segundaI
             segundaInstrucao[contador++] = valorDeEntrada[i];
     }
     limpaEspacosEmBrancoAEsquerdaDaString(segundaInstrucao);
-}
-
-int retornaPosicaoDoFimDaPalavra(char *palavra){
-    int posicao = 0;
-    for(int i = 0; i < strlen(palavra); i++){
-        if(palavra[i] < 97 || palavra[i] > 122){
-            posicao = i;
-            break;
-        }
-    }
 }
 
 int separaValorASerGuardado(char *valorDeEntrada, int inicioProximaInstrucao){
@@ -242,8 +232,8 @@ void executaLeituraDosDadosEGuardaNaMemoria(char *memoria, char *palavra){
             separaEnderecoDaInstrucao(segundaInstrucao, sEnderecoDeMemoriaEmHexa, inicioEnderecoMemoria);
             sEnderecoDeMemoria = converteHexaParaInt(sEnderecoDeMemoriaEmHexa);
         }else{
-            int inicioEnderecoMemoria = retornaPosicaoDoFimDaPalavra(segundaInstrucao);
-            separaOperacaoDaInstrucao(segundaInstrucao, sOp, inicioEnderecoMemoria);
+            int inicioEnderecoMemoria = strlen(segundaInstrucao);
+            separaOperacaoDaInstrucao(segundaInstrucao, sOp, inicioEnderecoMemoria-1);
             sEnderecoDeMemoria = 0;
         }
         guardaInstrucaoNaMemoria(sOp, sEnderecoDeMemoria, posicaoNaMemoria + 2, memoria);
@@ -266,11 +256,11 @@ void mostraRegistradores(){
      printf("  lr:     %.02x         \n",flagLR);
 }
 
-unsigned int passaInstrucaoDaMemoriaParaOMbr(){
+void passaInstrucaoDaMemoriaParaOMbr(){
     unsigned int hexmbr;
     hexmbr = (((memoria[mar]<<24)| (memoria[mar+1]<<16) )|(memoria[mar+2]<<8))|(memoria[mar+3]);
     flagLR = 1;
-    return hexmbr;
+    mbr = hexmbr;
 }
 
 unsigned short int passaDadoDaMemomiaParaOMbr(){
@@ -362,37 +352,48 @@ void identificaOp(){
         //jg
         if(greater == 1){
             pc = mar;
+        }else{
+            pc = pc +4;
         }
         break;
     case 17:
         //jge
         if(greater == 1 || equal == 1){
             pc = mar;
+        } else {
+            pc = pc + 4;
         }
         break;
     case 18:
-        //jmp
         pc = mar;
         break;
     case 19:
         //lda
         mbr = passaDadoDaMemomiaParaOMbr();
         aluA = mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 20:
         //ldb
         mbr = passaDadoDaMemomiaParaOMbr();
         aluB = mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 21:
         //sta
         mbr = aluA;
         passaDadoDoMbrParaAMemoria();
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 22:
         //stb
         mbr = aluB;
         passaDadoDoMbrParaAMemoria();
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 23:
         //ldrb
@@ -400,6 +401,8 @@ void identificaOp(){
         mar = mbr;
         passaDadoDaMemomiaParaOMbr();
         aluA = mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 24:
         //movial imm
@@ -407,6 +410,8 @@ void identificaOp(){
         mbr = imm;
         aluA = imm << 8;
         aluA = aluA >> 8;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
 
     case 25:
@@ -415,36 +420,50 @@ void identificaOp(){
         aluA = aluA << 8;
         aluA = aluA >> 8;
         aluA = aluA|imm;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 26:
         //addia
         mbr = imm;
         aluA = aluA + mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 27:
         //subia
         mbr = imm;
         aluA = aluA - mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 28:
         //mulia
         mbr = imm;
         aluA = aluA * mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 29:
         //divia
         mbr = imm;
         aluA = aluA/mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 30:
         //lsh
         mbr = imm;
         aluA = aluA << mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     case 31:
         //rsh
         mbr = imm;
         aluA = aluA >> mbr;
+        if(flagLR == 0)
+            pc = pc +4;
         break;
     }
 }
@@ -454,8 +473,27 @@ void mostraMemoriaEResgistradores(){
     mostraRegistradores();
 }
 
-int main()
-{
+void executaInstrucao(){
+    if(flagLR == 0){
+        mar = pc;
+        passaInstrucaoDaMemoriaParaOMbr();
+        divideMbrEmIrMarIbr();
+        flagLR = 1;
+    }else{
+        if(ir < 32){
+            identificaOp();
+            ir = 32;
+        }else{
+            ir = (ibr >> 11);
+            mar = (ibr << 5);
+            mar = mar >> 5;
+            flagLR = 0;
+            identificaOp();
+        }
+    }
+}
+
+int main(){
 
 
     for(int i = 0; i < 154; i++){
@@ -484,13 +522,31 @@ int main()
 
     printf("     ");
 
-    mbr = passaInstrucaoDaMemoriaParaOMbr();
-    pc=pc+4;
+    int comando = 1;
+    char erro[30];
+    preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
 
-    divideMbrEmIrMarIbr();
-    mostraMemoriaEResgistradores();
+    while(comando =! 0){
+        mostraMemoriaEResgistradores();
 
-    identificaOp();
+        printf("\n\n1- Executar clock de instrucao\n");
+        printf("0- Finalizar programa\n");
+        printf("%s\n", erro);
+        printf("Comando: ");
+        scanf("%i", &comando);
+        if(comando == 1){
+            executaInstrucao();
+            preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
+            system("cls");
+        }
+        else if(comando == 0){
+            break;
+        }
+        else {
+            system("cls");
+            strcpy(erro, "Comando Invalido");
+        }
+    }
 
     return 0;
 }
