@@ -318,36 +318,126 @@ void identificaOp(){
     switch(ir){
     case 0:
         //fim do programa
+        printf("\n\n FIM \n\n");
+        break;
+
     case 1:
         //nop
+        /*
+        NO OPERATION: Se 𝐿𝑅 = 1, o PC é incrementado, mas nenhum outro registrador tem seu valor alterado durante a execução de nop,
+         com exceção de LR, que segue o funcionamento apresentado acima. Caso 𝐿𝑅 = 0,
+        nenhum registrador, com exceção de LR, tem seu valor alterado.*/
+
+        if(flagLR==1){
+            pc=pc+4;
+        }
+        if(flagLR==0){
+            flagLR=1;
+        }
     case 2:
         //add
+        aluA = aluA + aluB;
+        if(flagLR == 0)
+            pc = pc +4;
     case 3:
         //sub
+        aluA = aluA - aluB;
+        if(flagLR == 0)
+            pc = pc +4;
     case 4:
         //mul
+        aluA = aluA * aluB;
+        if(flagLR == 0)
+            pc = pc +4;
     case 5:
         //div
+        aluA = aluA / aluB;
+        if(flagLR == 0)
+            pc = pc +4;
     case 6:
         //cmp
+        //Se A = B, então E = 1; senão E = 0
+        if(aluA == aluB){
+            equal = 1;
+        }else{
+            equal = 0;
+        }
+        //Se A < B, então L = 1; senão L = 0;
+        if(aluA < aluB){
+            lower =1;
+        }else{
+            lower = 0;
+        }
+        //Se A > B, então G = 1; senão G = 0.
+        if(aluA >  aluB){
+            greater = 1;
+        }else{
+            greater = 0;
+        }
+        if(flagLR == 0)
+            pc = pc +4;
     case 7:
         //xchg
+        //1) 𝑇 ← 𝐴;
+       // 2) 𝐴 ← 𝐵;
+       // 3) 𝐵 ← t.
+       aluT = aluA;
+       aluA = aluB;
+       aluB = aluT;
+       if(flagLR == 0)
+            pc = pc +4;
     case 8:
         //and
+        aluA = aluA&aluB;
+        if(flagLR == 0)
+            pc = pc +4;
     case 9:
         //or
+        aluA = aluA|aluB;
+        if(flagLR == 0)
+            pc = pc +4;
     case 10:
         //xor
+        aluA = aluA ^ aluB;
+        if(flagLR == 0)
+            pc = pc +4;
     case 11:
         //not
+        aluA = !aluA;
+        if(flagLR == 0)
+            pc = pc +4;
     case 12:
         //je
+        //muda o registrador PC para o endereço de memória X caso E = 1
+        if(equal == 1){
+            pc = mar;
+        }else{
+            pc=pc+4;
+        }
     case 13:
         //jne
+        //muda o registrador PC para o endereço de memória X caso E = 0.
+        if(equal == 0){
+            pc = mar;
+        }else{
+            pc= pc+4;
+        }
     case 14:
         //jl
+        //muda o registrador PC para o endereço de memória X caso L = 1
+        if(lower == 1){
+            pc = mar;
+        }else{
+            pc=pc+4;
+        }
     case 15:
         //jle
+        //muda o registrador PC para o endereço de memória X caso E = 1 ou L = 1.
+        if(equal == 1| lower == 1){
+            pc = mar;
+        }else{
+            pc =pc+4;
+        }
     case 16:
         //jg
         if(greater == 1){
