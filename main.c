@@ -10,6 +10,7 @@ unsigned char ir=0;
 unsigned char equal = 0, lower = 0, greater = 0;
 unsigned char flagLR = 0;
 unsigned short int aluA = 0, aluB = 0, aluT = 0 ;
+char erro[30];
 
 
 void imprimeEmBinario2(unsigned int num){
@@ -270,11 +271,12 @@ unsigned short int passaDadoDaMemomiaParaOMbr(){
 
 void passaDadoDoMbrParaAMemoria(){
     memoria[mar] = (mbr >> 8);
-    memoria[mar + 1] = (mbr << 8);
-    memoria[mar + 1] = memoria[mar + 1] >> 8;
+    memoria[mar + 1] = mbr;
 }
 
 void mostraMemoria(){
+
+    printf("     ");
 
     for(int i = 0;i < 16; i++){
         printf(" %02x ", i);
@@ -318,15 +320,12 @@ void identificaOp(){
     switch(ir){
     case 0:
         //fim do programa
-        printf("\n\n FIM \n\n");
+        strcpy(erro, "Fim do programa!");
+        pc = pc + 4;
         break;
 
     case 1:
         //nop
-        /*
-        NO OPERATION: Se 𝐿𝑅 = 1, o PC é incrementado, mas nenhum outro registrador tem seu valor alterado durante a execução de nop,
-         com exceção de LR, que segue o funcionamento apresentado acima. Caso 𝐿𝑅 = 0,
-        nenhum registrador, com exceção de LR, tem seu valor alterado.*/
 
         if(flagLR==1){
             pc=pc+4;
@@ -334,26 +333,31 @@ void identificaOp(){
         if(flagLR==0){
             flagLR=1;
         }
+        break;
     case 2:
         //add
         aluA = aluA + aluB;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 3:
         //sub
         aluA = aluA - aluB;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 4:
         //mul
         aluA = aluA * aluB;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 5:
         //div
         aluA = aluA / aluB;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 6:
         //cmp
         //Se A = B, então E = 1; senão E = 0
@@ -376,6 +380,7 @@ void identificaOp(){
         }
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 7:
         //xchg
         //1) 𝑇 ← 𝐴;
@@ -386,26 +391,31 @@ void identificaOp(){
        aluB = aluT;
        if(flagLR == 0)
             pc = pc +4;
+        break;
     case 8:
         //and
         aluA = aluA&aluB;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 9:
         //or
         aluA = aluA|aluB;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 10:
         //xor
         aluA = aluA ^ aluB;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 11:
         //not
         aluA = !aluA;
         if(flagLR == 0)
             pc = pc +4;
+        break;
     case 12:
         //je
         //muda o registrador PC para o endereço de memória X caso E = 1
@@ -414,6 +424,7 @@ void identificaOp(){
         }else{
             pc=pc+4;
         }
+        break;
     case 13:
         //jne
         //muda o registrador PC para o endereço de memória X caso E = 0.
@@ -422,6 +433,7 @@ void identificaOp(){
         }else{
             pc= pc+4;
         }
+        break;
     case 14:
         //jl
         //muda o registrador PC para o endereço de memória X caso L = 1
@@ -430,6 +442,7 @@ void identificaOp(){
         }else{
             pc=pc+4;
         }
+        break;
     case 15:
         //jle
         //muda o registrador PC para o endereço de memória X caso E = 1 ou L = 1.
@@ -438,6 +451,7 @@ void identificaOp(){
         }else{
             pc =pc+4;
         }
+        break;
     case 16:
         //jg
         if(greater == 1){
@@ -572,7 +586,8 @@ void executaInstrucao(){
     }else{
         if(ir < 32){
             identificaOp();
-            ir = 32;
+            if(ir != 0)
+                ir = 32;
         }else{
             ir = (ibr >> 11);
             mar = (ibr << 5);
@@ -610,15 +625,14 @@ int main(){
 
     fclose(arquivo);
 
-    printf("     ");
 
     int comando = 1;
-    char erro[30];
     preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
 
     while(comando =! 0){
         mostraMemoriaEResgistradores();
 
+        printf("%x\n", memoria[mar]);
         printf("\n\n1- Executar clock de instrucao\n");
         printf("0- Finalizar programa\n");
         printf("%s\n", erro);
@@ -626,7 +640,8 @@ int main(){
         scanf("%i", &comando);
         if(comando == 1){
             executaInstrucao();
-            preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
+            if(ir != 0)
+                preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
             system("cls");
         }
         else if(comando == 0){
