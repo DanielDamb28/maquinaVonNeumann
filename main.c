@@ -11,6 +11,7 @@ unsigned char equal = 0, lower = 0, greater = 0;
 unsigned char flagLR = 0;
 unsigned short int aluA = 0, aluB = 0, aluT = 0 ;
 char erro[30];
+int flagHlt = 0;
 
 
 void imprimeEmBinario2(unsigned int num){
@@ -310,6 +311,13 @@ void mostraMemoria(){
 
 void divideMbrEmIrMarIbr(){
     ir = mbr>>27;
+    if(ir >= 24){
+        imm = (mbr>>16)<<5;
+        imm =  imm >>5;
+    }else{
+        mar = (mbr>>16)<<5;
+        mar =  mar >>5;
+    }
     mar = (mbr>>16)<<5;
     mar =  mar >>5;
     ibr = mbr;
@@ -321,7 +329,7 @@ void identificaOp(){
     case 0:
         //fim do programa
         strcpy(erro, "Fim do programa!");
-        pc = pc + 4;
+        flagHlt = 1;
         break;
 
     case 1:
@@ -583,18 +591,19 @@ void executaInstrucao(){
         passaInstrucaoDaMemoriaParaOMbr();
         divideMbrEmIrMarIbr();
         flagLR = 1;
+        identificaOp();
     }else{
-        if(ir < 32){
-            identificaOp();
-            if(ir != 0)
-                ir = 32;
+        ir = (ibr >> 11);
+        if(ir >= 24){
+            imm = (ibr << 5);
+            imm = imm >> 5;
         }else{
-            ir = (ibr >> 11);
             mar = (ibr << 5);
             mar = mar >> 5;
-            flagLR = 0;
-            identificaOp();
         }
+        flagLR = 0;
+        identificaOp();
+
     }
 }
 
@@ -625,9 +634,8 @@ int main(){
 
     fclose(arquivo);
 
-
-    int comando = 1;
     preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
+    int comando = 1;
 
     while(comando =! 0){
         mostraMemoriaEResgistradores();
@@ -651,7 +659,12 @@ int main(){
             system("cls");
             strcpy(erro, "Comando Invalido");
         }
+        if(flagHlt == 1){
+            break;
+        }
     }
+    mostraMemoriaEResgistradores();
+    printf("\n\n\nPrograma Finalizado\n\n\n");
 
     return 0;
 }
