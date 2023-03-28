@@ -3,26 +3,17 @@
 #include <string.h>
 
 unsigned char memoria[154];
-unsigned short int mar = 0,ibr = 0,imm = 0;
-unsigned short int pc=0;
+unsigned short int mar = 0,ibr = 0,imm = 0, pc= 0;
 unsigned int mbr = 0;
-unsigned char ir=0;
-unsigned char equal = 0, lower = 0, greater = 0;
-unsigned char flagLR = 0;
+unsigned char ir =0, equal = 0, lower = 0, greater = 0, flagLR = 0;
 unsigned short int aluA = 0, aluB = 0, aluT = 0 ;
-char erro[30];
-int flagHlt = 0;
+short int flagHlt = 0;
 
-
-void imprimeEmBinario2(unsigned int num){
-    for(int i = sizeof(num)*8 - 1; i >= 0; i--){
-        printf("%d", (num>>i) & 1);
-    }
-}
-
-void imprimeEmBinario(unsigned short int num){
-    for(int i = sizeof(num)*8 - 1; i >= 0; i--){
-        printf("%d", (num>>i) & 1);
+void inicializaMemoriaComValorZero(){
+    for(int i = 0; i < 154; i++){
+        if(memoria[i] =! 47){
+            memoria[i] = 47;
+        }
     }
 }
 
@@ -131,8 +122,8 @@ int separaValorASerGuardado(char *valorDeEntrada, int inicioProximaInstrucao){
             valorASerGuardadoEmHexa[contador++] = valorDeEntrada[i];
     }
     limpaEspacosEmBrancoAEsquerdaDaString(valorASerGuardadoEmHexa);
-    int a = converteHexaParaInt(valorASerGuardadoEmHexa);
-    return a;
+    int numeroEmDecimal = converteHexaParaInt(valorASerGuardadoEmHexa);
+    return numeroEmDecimal;
 }
 
 void guardaInstrucaoNaMemoria(char *op, int enderecoDeMemoria, int posicaoNaMemoria, char *memoria){
@@ -173,7 +164,7 @@ void guardaInstrucaoNaMemoria(char *op, int enderecoDeMemoria, int posicaoNaMemo
 
 }
 
-void executaLeituraDosDadosEGuardaNaMemoria(char *memoria, char *palavra){
+void decodificaStringEGuardaNaMemoria(char *memoria, char *palavra){
     char valorDeEntrada[30] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
     char valorDaPosicaoDaMemoriaEmHexa[3] = "\0\0\0";
@@ -249,6 +240,50 @@ void executaLeituraDosDadosEGuardaNaMemoria(char *memoria, char *palavra){
     }
 }
 
+void lerArquivoEGuardaNaMemoria(){
+    FILE *arquivo;
+    char texto[30];
+
+    arquivo = fopen("entrada.txt", "r");
+
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return 1;
+    }
+
+    int i = 0;
+    while (fgets(texto, 30, arquivo) != NULL) {
+        decodificaStringEGuardaNaMemoria(memoria, texto);
+        i++;
+    }
+
+    fclose(arquivo);
+}
+
+void passaInstrucaoDaMemoriaParaOMbr(){
+    //mbr = (((memoria[mar]<<24)| (memoria[mar+1]<<16) )|(memoria[mar+2]<<8))|(memoria[mar+3]);
+    mbr = 0;
+    for(int i = 0; i < 4; i++){
+        mbr = mbr | memoria[mar + i];
+        if(i < 3)
+            mbr = mbr << 8;
+    }
+    flagLR = 1;
+}
+
+unsigned short int passaDadoDaMemomiaParaOMbr(){
+    mbr = 0;
+    for(int i = 0; i < 2; i++){
+        mbr = mbr | memoria[mar + i];
+        mbr = mbr << 8 - (8*i);
+    }
+}
+
+void passaDadoDoMbrParaAMemoria(){
+    memoria[mar] = (mbr >> 8);
+    memoria[mar + 1] = mbr;
+}
+
 void mostraRegistradores(){
      printf("\n \n \t\t Registradores :  \n\n");
      printf("  A:      %.04x               B:    %.04x               T:      %.04x   \n",aluA,aluB,aluT);
@@ -256,23 +291,6 @@ void mostraRegistradores(){
      printf("  IBR:    %.08x           PC:   %.04x               IMM:    %.04x   \n",ibr,pc,imm);
      printf("  E:      %.02x                 L:    %.02x                 G:      %.02x   \n",equal,lower,greater);
      printf("  lr:     %.02x         \n",flagLR);
-}
-
-void passaInstrucaoDaMemoriaParaOMbr(){
-    unsigned int hexmbr;
-    hexmbr = (((memoria[mar]<<24)| (memoria[mar+1]<<16) )|(memoria[mar+2]<<8))|(memoria[mar+3]);
-    flagLR = 1;
-    mbr = hexmbr;
-}
-
-unsigned short int passaDadoDaMemomiaParaOMbr(){
-    unsigned short int hexmbr = (memoria[mar] << 8)|(memoria[mar + 1]);
-    return hexmbr;
-}
-
-void passaDadoDoMbrParaAMemoria(){
-    memoria[mar] = (mbr >> 8);
-    memoria[mar + 1] = mbr;
 }
 
 void mostraMemoria(){
@@ -309,6 +327,11 @@ void mostraMemoria(){
     }
 }
 
+void mostraMemoriaEResgistradores(){
+    mostraMemoria();
+    mostraRegistradores();
+}
+
 void divideMbrEmIrMarIbr(){
     ir = mbr>>27;
     if(ir >= 24){
@@ -328,7 +351,6 @@ void identificaOp(){
     switch(ir){
     case 0:
         //fim do programa
-        strcpy(erro, "Fim do programa!");
         flagHlt = 1;
         break;
 
@@ -481,14 +503,14 @@ void identificaOp(){
         break;
     case 19:
         //lda
-        mbr = passaDadoDaMemomiaParaOMbr();
+        passaDadoDaMemomiaParaOMbr();
         aluA = mbr;
         if(flagLR == 0)
             pc = pc +4;
         break;
     case 20:
         //ldb
-        mbr = passaDadoDaMemomiaParaOMbr();
+        passaDadoDaMemomiaParaOMbr();
         aluB = mbr;
         if(flagLR == 0)
             pc = pc +4;
@@ -580,11 +602,6 @@ void identificaOp(){
     }
 }
 
-void mostraMemoriaEResgistradores(){
-    mostraMemoria();
-    mostraRegistradores();
-}
-
 void executaInstrucao(){
     if(flagLR == 0){
         mar = pc;
@@ -607,64 +624,28 @@ void executaInstrucao(){
     }
 }
 
-int main(){
-
-
-    for(int i = 0; i < 154; i++){
-        if(memoria[i] =! 47){
-            memoria[i] = 47;
-        }
-    }
-
-    FILE *arquivo;
-    char texto[30];
-
-    arquivo = fopen("entrada.txt", "r");
-
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo.\n");
-        return 1;
-    }
-
-    int i = 0;
-    while (fgets(texto, 30, arquivo) != NULL) {
-        executaLeituraDosDadosEGuardaNaMemoria(memoria, texto);
-        i++;
-    }
-
-    fclose(arquivo);
-
-    preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
-    int comando = 1;
+void executaPrograma(){
+    char comando = 1;
 
     while(comando =! 0){
         mostraMemoriaEResgistradores();
 
-        printf("%x\n", memoria[mar]);
-        printf("\n\n1- Executar clock de instrucao\n");
-        printf("0- Finalizar programa\n");
-        printf("%s\n", erro);
-        printf("Comando: ");
-        scanf("%i", &comando);
-        if(comando == 1){
-            executaInstrucao();
-            if(ir != 0)
-                preencheTodasAsPosicoesDoVetorComVazio(erro, 30);
-            system("cls");
-        }
-        else if(comando == 0){
-            break;
-        }
-        else {
-            system("cls");
-            strcpy(erro, "Comando Invalido");
-        }
+        system("pause");
         if(flagHlt == 1){
             break;
         }
+        executaInstrucao();
+        system("cls");
     }
     mostraMemoriaEResgistradores();
     printf("\n\n\nPrograma Finalizado\n\n\n");
+}
+
+int main(){
+
+    inicializaMemoriaComValorZero();
+    lerArquivoEGuardaNaMemoria();
+    executaPrograma();
 
     return 0;
 }
