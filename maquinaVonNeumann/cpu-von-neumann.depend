@@ -1,0 +1,26 @@
+# depslib dependency file v1.0
+1679061645 source:c:\users\daniel\desktop\estudos\faculdade\3 periodo\arquitetura de computadores\cpu-von-neumann\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1679159712 source:c:\users\home\documents\trabalho hugo\maquinavonneumann\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1679510321 source:c:\users\daniel\desktop\estudos\faculdade\3 periodo\arquitetura de computadores\maquinavonneumann\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1679616923 source:c:\users\home\documents\trabalho hugo\2\maquinavonneumann\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1679945454 source:c:\users\daniel\desktop\estudos\faculdade\3 periodo\maquinavonneumann\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
