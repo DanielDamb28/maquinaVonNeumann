@@ -630,7 +630,8 @@ void executaPrograma(){
     while(comando =! 0){
         mostraMemoriaEResgistradores();
 
-        system("pause");
+        printf("\nClique qualquer coisa para continuar:");
+        getchar();
         if(flagHlt == 1){
             break;
         }
